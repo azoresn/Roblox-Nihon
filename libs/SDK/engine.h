@@ -1,56 +1,58 @@
 #pragma once
 #include <windows.h>
-#include <chrono>
-
-using namespace std::chrono_literals;
-inline HMODULE g_hModule{};
-inline LPCWSTR g_ModuleName{};
-inline std::atomic_bool g_Running = TRUE;
-inline std::atomic_bool g_Killswitch = FALSE;
 
 //	Establish Pointer Paths and base address
-static uintptr_t dwGameBase = (uintptr_t)GetModuleHandle(g_ModuleName);
+inline HMODULE g_hModule{};
+inline LPCWSTR g_ModuleName{};
+static uintptr_t dwGameBase = (uintptr_t)GetModuleHandle(g_ModuleName);    
 static uintptr_t dwEEMem = (uintptr_t)GetProcAddress(g_hModule, "EEmem");
 static uintptr_t BasePS2MemorySpace = *(uintptr_t*)dwEEMem;
-
-struct Vector2 {
-    float x, y;
-};
-
-struct Vector3 {
-    float x, y, z;
-};
-
-struct Vector4 {
-    float x, y, z, w;
-};
 
 class PS2 {
     
     // Core Functionality
 public:
-    PS2() {}
+
+    struct Vector2 {
+        float x, y;
+    };
+
+    struct Vector3 {
+        float x, y, z;
+    };
+
+    struct Vector4 {
+        float x, y, z, w;
+    };
+
+    struct EMU
+    {
+
+        uintptr_t m_OnLeftDClick = NULL;
+        uintptr_t m_ResetEE = NULL;
+
+        void __cdecl recResetEE(uintptr_t Address)
+        {
+            typedef void(__cdecl* pFunctionAddress)();
+            pFunctionAddress pResetEE = (pFunctionAddress)((Address));
+            pResetEE();
+        }
+
+    };
+
+    PS2() 
+    {
+        InitializeSDK();
+    }
     ~PS2() {}
 
-    /// <summary>
-    /// 
-    /// </summary>
     void InitializeSDK()
     {
-        //static uintptr_t dwGameBase = (uintptr_t)GetModuleHandle(g_ModuleName);
-        //static uintptr_t dwEEMem = (uintptr_t)GetProcAddress(g_hModule, "EEmem");
-        //static uintptr_t BasePS2MemorySpace = *(uintptr_t*)dwEEMem;
+        //	m_OnLeftDClick = Signature("48 8B 05 ? ? ? ? 80 B8 ? ? ? ? ? 74 0C").Scan().As<uint64_t>();
+        //  m_ResetEE = Signature("80 3D ? ? ? ? ? 74 13 B8 ? ? ? ? 86").Scan().As<uint64_t>();	// 80 3D 09 18 E8 0C 00 74 13 B8 01 00 00 00 86 05 DF 0B E8 0C C6 05 F6 17 E8 0C 01
     }
 
-    //	m_OnLeftDClick = Signature("48 8B 05 ? ? ? ? 80 B8 ? ? ? ? ? 74 0C").Scan().As<uint64_t>();
-        
-    //  m_ResetEE = Signature("80 3D ? ? ? ? ? 74 13 B8 ? ? ? ? 86").Scan().As<uint64_t>();	// 80 3D 09 18 E8 0C 00 74 13 B8 01 00 00 00 86 05 DF 0B E8 0C C6 05 F6 17 E8 0C 01
-    void __cdecl recResetEE(uintptr_t Address)
-    {
-        typedef void(__cdecl* pFunctionAddress)();
-        pFunctionAddress pResetEE = (pFunctionAddress)((Address));
-        pResetEE();
-    }
+
 
     // Memory Operations
 public:
@@ -112,20 +114,30 @@ public:
 
     // Takes Full Address
     // Make sure to resolve any offsets prior to running this function
-    template<typename T> inline T Read(uintptr_t Address)
+    // NOTE: only reads last 4bytes
+    template<typename T> inline T PS2Read(uintptr_t Address)
     {
+        /// USING FRAMERATE AS AN EXAMPLE
+        //0x7FF6B048CF60 0000001E0000001E   //  8   Bytes
+        //0x7FF6B048CF60 0000001E           //  4   Bytes
+        // Reformat Value from designated address
+        unsigned int format = *(int32_t*)Address;
+        
         T A{};
-        A = *(T*)Address;   // int32_t ??
+        A = (T)format;
         return A;
     }
 
     // Takes Full Address
     // Make sure to resolve any offsets prior to running this function
-    template<typename T> inline void Write(uintptr_t Address, T Patch)
+    // NOTE: only writes last 4bytes
+    template<typename T> inline void PS2Write(uintptr_t Address, T Patch)
     {
+        /// USING FRAMERATE AS AN EXAMPLE
+        //0x7FF6B048CF60 0000001E0000001E   //  8   Bytes
+        //0x7FF6B048CF60 0000001E           //  4   Bytes
         // Reformat Value from designated address
-        auto format = *(int32_t*)Address;
-        *(T*)format = Patch;
+        *(int32_t*)Address = Patch;
     }
 
     /// <summary>
@@ -136,7 +148,7 @@ public:
     /// <param name="size"></param>
     /// <returns>TRUE if operation is a success, otherwise result is FALSE</returns>
     /// Note: resolve any offsets prior to running this function.
-    bool Patch(uintptr_t Address, BYTE* bytes, unsigned int size)
+    bool BytePatch(uintptr_t Address, BYTE* bytes, unsigned int size)
     {
         DWORD oldprotect;
         auto status = VirtualProtect(reinterpret_cast<void*>(Address), size, PAGE_EXECUTE_READWRITE, &oldprotect);

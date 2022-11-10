@@ -43,35 +43,61 @@ void RenderContent()
 
 		if (ImGui::Button("Test Read", ImVec2(ImGui::GetWindowContentRegionWidth(), 20)))
 		{
-			auto value = g_Engine->Read<int>(dwGameBase);
-			g_Console->printdbg("dwGameBase: %llX\nVALUE: %X\n\n", Console::Colors::blue, dwGameBase, value);
+			SOCOM1::Offsets offsets;
+
+			auto address = offsets.FrameRate1;
+
+			auto value = g_Engine->PS2Read<int>(offsets.FrameRate1);
+
+			g_Console->printdbg("Test Read Memory:\nFrameRate1: [%08X]\nVALUE: [%i]\n\n", Console::Colors::blue, address, value);
 		}
 
-		if (ImGui::Button("Test Write", ImVec2(ImGui::GetWindowContentRegionWidth(), 20)))
+		if (ImGui::Button("Test Write Memory", ImVec2(ImGui::GetWindowContentRegionWidth(), 20)))
 		{
 			SOCOM1::Offsets offsets;
 
-			if (offsets.SEALPointer != NULL) {
+			g_Engine->PS2Write<int>(offsets.FrameRate1, 30);
 
-				auto base = (SOCOM1::CPlayer*)offsets.SEALPointer;
+			g_Engine->PS2Write<int>(offsets.FrameRate2, 30);
 
-				if (base->IsValid())
-					base->Health = 0;	//	Temporary, although this is expected behavior
-					//g_Engine->Write<float>(base->Health, 0.f);	// needs thorough testing and though. 
-			}
+			g_Console->printdbg("Test Write Memory:\nFrameRate1: [%i]\nFrameRate2: [%i]\n\n", Console::Colors::blue, g_Engine->PS2Read<int>(offsets.FrameRate1), g_Engine->PS2Read<int>(offsets.FrameRate2));
+
 		}
 
 		if (ImGui::Button("Test ResolvePointer", ImVec2(ImGui::GetWindowContentRegionWidth(), 20)))
 		{
 			SOCOM1::Offsets offsets;
 
-			if (offsets.SEALPointer != NULL)
-			{
-				auto base = (CPlayer*)offsets.SEALPointer;
+			auto base = (CPlayer*)offsets.SEALPointer;
+
+			if (base->IsValid()) {
 			
 				CPlayer::CPlayerPhysics* move = base->PlayerPhysicsPtr();
-				
+
 				g_Console->printdbg("%s", Console::Colors::DEFAULT, base->LogData().c_str());
+			}
+		}
+
+		if (ImGui::Button("Display Offsets Data", ImVec2(ImGui::GetWindowContentRegionWidth(), 20)))
+		{
+			SOCOM1::Offsets offsets;
+
+			g_Console->printdbg("Dumping Offset Data:\n%s", Console::Colors::DEFAULT, offsets.LogData().c_str());
+		}
+
+		if (ImGui::Button("Check isValid", ImVec2(ImGui::GetWindowContentRegionWidth(), 20)))
+		{
+			Offsets offsets;
+
+			auto base = (CPlayer*)offsets.SEALPointer;
+
+			bool result = base->IsValid();
+
+			switch (result) {
+
+				case (TRUE):	g_Console->printdbg("isValid: [%i]\n", Console::Colors::yellow, result); break;
+
+				case (FALSE):	g_Console->printdbg("isValid: [%i]\n", Console::Colors::red, result); break;
 			}
 		}
 
@@ -79,12 +105,20 @@ void RenderContent()
 		{
 			SOCOM1::Offsets offsets;
 
-			if (offsets.SEALPointer != NULL) {
+			auto base = (SOCOM1::CPlayer*)offsets.SEALPointer;
 
-				auto base = (SOCOM1::CPlayer*)offsets.SEALPointer;
-
+			if (base->IsValid())
 				g_Console->printdbg("%s", Console::Colors::DEFAULT, base->LogData().c_str());
-			}
+		}
+
+		if (ImGui::Button("Give 552", ImVec2(ImGui::GetWindowContentRegionWidth(), 20)))
+		{
+			SOCOM1:Offsets offsets;
+
+			auto player = (SOCOM1::CPlayer*)offsets.SEALPointer;
+
+			if (player->IsValid())
+				player->PrimaryWeapon = CPlayer::CWeapon::AR_552;
 		}
 
 		if (ImGui::Button("Dump Entity Array", ImVec2(ImGui::GetWindowContentRegionWidth(), 20)))
@@ -108,6 +142,10 @@ void RenderContent()
 
 			g_Console->printdbg("IsMatchEnded: [%i]\n\n", Console::Colors::yellow, data.isMatchEnded());
 		}
+
+		ImGui::Spacing();
+		ImGui::Separator();
+		ImGui::Spacing();
 
 		if (ImGui::Button("UNHOOK DLL", ImVec2(ImGui::GetWindowContentRegionWidth(), 20)))
 			g_Killswitch = TRUE;

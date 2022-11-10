@@ -155,7 +155,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="include\framework.h" />
     <ClInclude Include="include\helper.h" />
     <ClInclude Include="include\initialize.hpp" />
     <ClInclude Include="include\Overlay.hpp" />

@@ -46,3 +46,13 @@ x64/Debug/PCSX2-Menyu.vcxproj.FileListAbsolute.txt
 x64/Debug/trampoline.obj
 x64/Debug/vc142.idb
 x64/Debug/vc142.pdb
+.vs/PCSX2-Menyu/v16/ipch/AutoPCH/41945ad090976e2d/HOOKING.ipch
+.vs/PCSX2-Menyu/v16/ipch/AutoPCH/5fcf11d3cc2ff18b/FRAMEWORK.ipch
+.vs/PCSX2-Menyu/v16/ipch/AutoPCH/cb5b109271d77b81/CONSOLE.ipch
+x64/Debug/console.obj.enc
+x64/Debug/d3d11window.obj.enc
+x64/Debug/dllmain.obj.enc
+x64/Debug/game.obj.enc
+x64/Debug/hooking.obj.enc
+x64/Debug/imgui_impl_win32.obj.enc
+x64/Debug/overlay.obj.enc
