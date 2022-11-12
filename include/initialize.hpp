@@ -26,6 +26,7 @@ void InitializeFramework()
     // WAIT FOR USER INPUT
     while (GetAsyncKeyState(VK_INSERT) == 0)
         Sleep(60);
+
     g_Console->printdbg("Initializing NightFyre Framework\n", Console::Colors::yellow);
 
     /// ESTABLISH GAME DATA   

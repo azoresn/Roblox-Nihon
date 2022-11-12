@@ -28,8 +28,8 @@ public:
     struct EMU
     {
 
-        uintptr_t m_OnLeftDClick = NULL;
-        uintptr_t m_ResetEE = NULL;
+        uintptr_t hk_OnLeftDClick = NULL;
+        uintptr_t hk_ResetEE = NULL;
 
         void __cdecl recResetEE(uintptr_t Address)
         {

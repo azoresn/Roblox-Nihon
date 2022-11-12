@@ -15,6 +15,7 @@ namespace SOCOM1 {
 			0x48CF60, // fps1
 			0x48CF64  // fps2
 		};
+
 		std::vector<std::string> names = {
 			"GameEndedAddress",
 			"ForceStartMatch",
@@ -86,6 +87,62 @@ namespace SOCOM1 {
 		}
 	};
 
+	class CWeapon
+	{
+
+		/*
+		
+			- Core
+			-- GiveAmmo
+			-- GiveWeapon
+			-- GetLoadoutData | Primary, Secondary, Equipment & Ammo
+
+			- Systems
+			-- Weapon Manager | Slot -> Type -> Weapon : Send
+		
+		*/
+
+	public:
+		enum WeaponSlot : unsigned int
+		{
+			Primary,	// = 0x60C,
+			Secondary,	// = 0x610,
+			EqSlot1,	// = 0x614,
+			EqSlot2,	// = 0x618,
+			EqSlot3,	// = 0x61C,
+		};
+		int e_selectedSlot = Primary;
+		const char* AvailSlots[5] = { "Primary", "Secondary", "Equipment 1", "Equipment 2", "Equipment 3" };
+
+		enum Primary : unsigned int
+		{
+			M4A1_SD = 0xCC3F80,
+			AR_552 = 0xCC4550,
+			SMG_9MM = 0x00CC61F0,
+			abs1 = 0xCC6D90,
+		};
+		unsigned int e_selected_Primary = Primary::AR_552;
+		const char* PrimaryWeapons[4] = { "M4A1 SD", "552", "9mm Sub", "abs" };
+
+		enum Secondary : unsigned int
+		{
+			PISTOL_9MM = 0xCC2B60,
+			_abs = 13402528,
+			_abs2 = 13401072,
+			_abs3 = 13395872,
+			_abs4 = 13377488,
+		};
+		unsigned int e_selected_Secondary = Secondary::PISTOL_9MM;
+		const char* SecondaryWeapons[5] = { "9MM Pistol", "abs", "abs2", "abs3", "abs4" };
+
+		enum Equipment : unsigned int
+		{
+			Flashbang = 0x0,
+		};
+		unsigned int e_selected_Equipment = Equipment::Flashbang;
+		const char* EquipmentWeapon[1] = { "Flashbang" };
+	};
+
 	class CPlayer : public PS2
 	{
 		// SUB CLASSES
@@ -98,103 +155,63 @@ namespace SOCOM1 {
 			char pad_003C[348];	//0x003C
 
 			//	FUNCTIONS
-		public:	// FUNCTIONS
+		public:
+
 			std::string LogData()
 			{
-
+				return "";
 			}
 
 		};	//Size: 0x0198
 
 		enum Teams : unsigned int
 		{
-			SEALS		= 0x40000001,		//	Seal
-			TERRORIST	= 0x80000100,		//	Terrorist
-			TURRET		= 0x48000000,		//	Turret
-			SPECTATOR	= 0x00010000,		//	Spectator
+			SEALS = 0x40000001,			//	Seal
+			TERRORIST = 0x80000100,		//	Terrorist
+			TURRET = 0x48000000,		//	Turret
+			SPECTATOR = 0x00010000,		//	Spectator
 
 			// CAMPAIGN
-			SP_ABLE		= 0x84000006,		//	Alpha Team
-			SP_BRAVO	= 0x8400000A,		//	Bravo Team
-			SP_ENEMY_A	= 0x40000050,		//	Iron Brother / Iron Leader
-			SP_ENEMY_B	= 0x40000100,		//	
-			SP_ENEMY_C	= 0x40000210,		//	
-			SP_ENEMY_D	= 0x40000410,		//	
-			SP_ENEMY_E	= 0x40000810,		//	
-			SP_ENEMY_F	= 0x40001010,		//	
-			SP_ENEMY_G	= 0x40002010,		//	
-			SP_ENEMY_H	= 0x40004010,		//	
-			SP_ENEMY_I	= 0x40021010,		//	
-
-		};
-
-		class CWeapon
-		{
-		public:
-			enum Weapon : unsigned int
-			{
-				// Primaries
-				AR_552		= 0xCC4550,
-				SMG_9MM		= 0x00CC61F0,
-
-				// Secondaries
-				PISTOL_9MM	= 0xCC2B60,
-			};
-			
-			enum WeaponSlot : unsigned int
-			{
-				Primary,	// = 0x60C,
-				Secondary,	// = 0x610,
-				EqSlot1,	// = 0x614,
-				EqSlot2,	// = 0x618,
-				EqSlot3,	// = 0x61C,
-			};
-
+			SP_ABLE = 0x84000006,			//	Alpha Team
+			SP_BRAVO = 0x8400000A,			//	Bravo Team
+			SP_ENEMY_A = 0x40000050,		//	Iron Brother / Iron Leader
+			SP_ENEMY_B = 0x40000100,		//	
+			SP_ENEMY_C = 0x40000210,		//	
+			SP_ENEMY_D = 0x40000410,		//	
+			SP_ENEMY_E = 0x40000810,		//	
+			SP_ENEMY_F = 0x40001010,		//	
+			SP_ENEMY_G = 0x40002010,		//	
+			SP_ENEMY_H = 0x40004010,		//	
+			SP_ENEMY_I = 0x40021010,		//	
 		};
 
 		//	OFFSETS
-	public:
-		char pad_0000[20];	//0x0000
-		int NamePTR;	//0x0014
-		char pad_0018[4];	//0x0018
-		Vector3 Position;	//0x001C
+	public:	// NATIVE OFFSETS (DO NOT DISRUPT)
+		char pad_0000[20];				//0x0000
+		int NamePTR;					//0x0014
+		char pad_0018[4];				//0x0018
+		Vector3 Position;				//0x001C
 		CPlayerPhysics* CPlayerMovement;	//0x0028
-		char pad_0030[148];	//0x0030
-		int TeamID;	//0x00C4
-		char pad_00C8[1348];	//0x00C8
-		unsigned int PrimaryWeapon;	//0x060C
+		char pad_0030[148];				//0x0030
+		int TeamID;						//0x00C4
+		char pad_00C8[1348];			//0x00C8
+		unsigned int PrimaryWeapon;		//0x060C
 		unsigned int SecondaryWeapon;	//0x0610
-		unsigned int EqSlot1;	//0x0614
-		unsigned int EqSlot2;	//0x0618
-		unsigned int EqSlot3;	//0x061C
-		char pad_0620[220];	//0x0620
-		int PrimaryMag1;	//0x06FC
-		int PrimaryMag2;	//0x0700
-		int PrimaryMag3;	//0x0704
-		int PrimaryMag4;	//0x0708
-		int PrimaryMag5;	//0x070C
-		int PrimaryMag6;	//0x0710
-		int PrimaryMag7;	//0x0714
-		int PrimaryMag8;	//0x0718
-		int PrimaryMag9;	//0x071C
-		int PrimaryMag10;	//0x0720
-		int SecondaryMag1;	//0x0724
-		int SecondaryMag2;	//0x0728
-		int SecondaryMag3;	//0x072C
-		int SecondaryMag4;	//0x0730
-		int SecondaryMag5;	//0x0734
-		int SecondaryMag6;	//0x0738
-		int SecondaryMag7;	//0x073C
-		int SecondaryMag8;	//0x0740
-		int SecondaryMag9;	//0x0744
-		int SecondaryMag10;	//0x0748
-		int EquipmentSlot1;	//0x074C
-		char pad_0750[36];	//0x0750
-		int EquipmentSlot2;	//0x0774
-		char pad_0778[36];	//0x0778
-		int EquipmentSlot3;	//0x079C
-		char pad_07A0[1840];	//0x07A0
-		float Health;	//0x0ED0
+		unsigned int EqSlot1;			//0x0614
+		unsigned int EqSlot2;			//0x0618
+		unsigned int EqSlot3;			//0x061C
+		char pad_0620[220];				//0x0620
+		int PrimaryMag[10];				//0x06FC
+		int SecondaryMag[10];			//0x0724
+		int EquipmentSlot1;				//0x074C
+		char pad_0750[36];				//0x0750
+		int EquipmentSlot2;				//0x0774
+		char pad_0778[36];				//0x0778
+		int EquipmentSlot3;				//0x079C
+		char pad_07A0[1840];			//0x07A0
+		float Health;					//0x0ED0
+
+
 
 		//	FUNCTIONS
 	public:
@@ -271,8 +288,34 @@ namespace SOCOM1 {
 			switch (Weapon)
 			{
 				case(CWeapon::AR_552): return "552";
+				case(CWeapon::SMG_9MM): return "9MM SUB";
+				case(CWeapon::PISTOL_9MM): return "9MM PISTOL";
 			}
+
+			char data[0x56];
+			const char* data2 = "%08X";
+			sprintf_s(data, data2, Weapon);
 			return std::to_string(Weapon);
+		}
+
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="amount"></param>
+		/// <param name="mags"></param>
+		void GiveAmmo(int amount, int mags = {})
+		{
+			if (mags <= NULL || mags > 10)
+				mags = 3;
+
+			for (int i = NULL; i < mags; i++)
+			{
+				this->PrimaryMag[i] = amount;
+				this->SecondaryMag[i] = amount;
+			}
+			this->EquipmentSlot1 = NULL;
+			this->EquipmentSlot2 = NULL;
+			this->EquipmentSlot3 = NULL;
 		}
 
 		/// <summary>
@@ -285,12 +328,45 @@ namespace SOCOM1 {
 			// Intended usage
 			switch (Slot)
 			{
-				case (CWeapon::WeaponSlot::Primary):	this->PrimaryWeapon		= Weapon;	break;
-				case (CWeapon::WeaponSlot::Secondary):	this->SecondaryWeapon	= Weapon;	break;
-				case (CWeapon::WeaponSlot::EqSlot1):	this->EqSlot1			= Weapon;	break;
-				case (CWeapon::WeaponSlot::EqSlot2):	this->EqSlot2			= Weapon;	break;
-				case (CWeapon::WeaponSlot::EqSlot3):	this->EqSlot3			= Weapon;	break;
+				case (CWeapon::WeaponSlot::Primary):		this->PrimaryWeapon		= Weapon;	break;
+				case (CWeapon::WeaponSlot::Secondary):		this->SecondaryWeapon	= Weapon;	break;
+				case (CWeapon::WeaponSlot::EqSlot1):		this->EqSlot1			= Weapon;	break;
+				case (CWeapon::WeaponSlot::EqSlot2):		this->EqSlot2			= Weapon;	break;
+				case (CWeapon::WeaponSlot::EqSlot3):		this->EqSlot3			= Weapon;	break;
 			}
+		}
+
+		/// <summary>
+		/// 
+		/// </summary>
+		void RemoveWeaponsandAmmo()
+		{
+			this->PrimaryWeapon = NULL;
+			this->SecondaryWeapon = NULL;
+			this->EqSlot1 = NULL;
+			this->EqSlot2 = NULL;
+			this->EqSlot3 = NULL;
+
+			for (int i = NULL; i < 10; i++)
+			{
+				this->PrimaryMag[i] = NULL;
+				this->SecondaryMag[i] = NULL;
+			}
+			this->EquipmentSlot1 = NULL;
+			this->EquipmentSlot2 = NULL;
+			this->EquipmentSlot3 = NULL;
+		}
+
+		/// <summary>
+		/// Teleports this entity to desired position
+		/// </summary>
+		/// <param name="Pos"></param>
+		void Teleport(Vector3 Pos)
+		{
+			unsigned int test = (unsigned int)this->CPlayerMovement;
+			auto offset = (test + BasePS2MemorySpace);
+			auto Movement = (CPlayerPhysics*)offset;
+			Movement->absPosition = Pos;
 		}
 
 		/// <summary>
@@ -311,17 +387,27 @@ namespace SOCOM1 {
 			char data[0x256];
 			const char* data2 = "PlayerObjectBase: %llX\nPlayerName: %s\nTeamName: %s\nPrimary Weapon: %s	|	PrimaryAmmo: %i\nSecondary Weapon: %s	|	SecondaryAmmo: %i\nHealth: %0.f\nPosition: { %f, %f, %f }\nDistance: { %f }\n\n";
 			sprintf_s(data, data2, this, this->GetPlayerName().c_str(), this->GetTeamName().c_str(),
-				GetWeaponName(this->PrimaryWeapon).c_str(), this->PrimaryMag1, 
-				GetWeaponName(this->SecondaryWeapon).c_str(), this->SecondaryMag1, 
+				GetWeaponName(this->PrimaryWeapon).c_str(), this->PrimaryMag[0], 
+				GetWeaponName(this->SecondaryWeapon).c_str(), this->SecondaryMag[0], 
 				(this->Health * 100.f),
 				this->Position.x, this->Position.y, this->Position.z, distance);
 			return data;
 		}
 
 	};	//Size: 0x0ED4
-
+	
 	class MatchData : public PS2
 	{
+		/*
+		* 
+			- ForceHost
+			- ForceStartMatch
+			- ForceEndMatch
+			- MatchNeverEnds
+			- PlayerArray
+			- GetLobbyInfo	| RoomName, MapName, Mode, #Players(Organized by team), Rounds Won/Current Round/Timer
+		
+		*/
 		// NOTES
 		// Host
 		// - Force Start
@@ -404,4 +490,5 @@ namespace SOCOM1 {
 			return "";
 		}
 	};
+
 }

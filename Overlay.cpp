@@ -3,6 +3,38 @@
 //-----------------------------------------------------------------------------------
 //										MENU
 //-----------------------------------------------------------------------------------
+CWeapon WeaponData;
+void WeaponManager(CPlayer* player)
+{
+	ImGui::Spacing();
+	ImGui::Separator();
+	ImGui::TextCentered("[WEAPON MANAGER]", TRUE, ImColor(0, 255, 255, 200));
+	ImGui::Separator();
+	ImGui::SetNextItemWidth(100);
+	ImGui::Combo("##jfhgjdflkhklsdh", (int*)&WeaponData.e_selectedSlot, WeaponData.AvailSlots, IM_ARRAYSIZE(WeaponData.AvailSlots));
+	ImGui::SameLine();
+	ImGui::SetNextItemWidth(100);
+	switch (WeaponData.e_selectedSlot)
+	{
+		case(0): ImGui::Combo("##jfhgjdflkhklsdh1", (int*)&WeaponData.e_selected_Primary, WeaponData.PrimaryWeapons, IM_ARRAYSIZE(WeaponData.PrimaryWeapons)); break;
+		case(1): ImGui::Combo("##kdgdsazhljfna", (int*)&WeaponData.e_selected_Secondary, WeaponData.SecondaryWeapons, IM_ARRAYSIZE(WeaponData.SecondaryWeapons)); break;
+		case(2): ImGui::Combo("##zjdfhbadeh", (int*)&WeaponData.e_selected_Equipment, WeaponData.EquipmentWeapon, IM_ARRAYSIZE(WeaponData.EquipmentWeapon)); break;
+		case(3): ImGui::Combo("##hsdfgjsytkiet", (int*)&WeaponData.e_selected_Equipment, WeaponData.EquipmentWeapon, IM_ARRAYSIZE(WeaponData.EquipmentWeapon)); break;
+		case(4): ImGui::Combo("##gjnkdtoythmyuk", (int*)&WeaponData.e_selected_Equipment, WeaponData.EquipmentWeapon, IM_ARRAYSIZE(WeaponData.EquipmentWeapon)); break;
+	}
+	if (ImGui::Button("GIVE WEAPON", ImVec2(ImGui::GetContentRegionAvail().x, 0)))
+	{
+		switch (WeaponData.e_selectedSlot)
+		{
+			case 0:        player->GiveWeapon(WeaponData.e_selectedSlot, WeaponData.e_selected_Primary); break;
+			case 1:        player->GiveWeapon(WeaponData.e_selectedSlot, WeaponData.e_selected_Secondary); break;
+			case 2:        player->GiveWeapon(WeaponData.e_selectedSlot, WeaponData.e_selected_Equipment); break;
+			case 3:        player->GiveWeapon(WeaponData.e_selectedSlot, WeaponData.e_selected_Equipment); break;
+			case 4:        player->GiveWeapon(WeaponData.e_selectedSlot, WeaponData.e_selected_Equipment); break;
+		}
+	}
+}
+
 
 void InitStyle()
 {
@@ -41,10 +73,12 @@ void RenderContent()
 		ImGui::Separator();
 		ImGui::Spacing();
 
-		if (ImGui::Button("Test Read", ImVec2(ImGui::GetWindowContentRegionWidth(), 20)))
-		{
-			SOCOM1::Offsets offsets;
+		SOCOM1::Offsets offsets;
+		SOCOM1::CPlayer* PLAYER = (CPlayer*)offsets.SEALPointer;
+		SOCOM1::MatchData MATCH;
 
+		if (ImGui::Button("Test Read Memory", ImVec2(ImGui::GetWindowContentRegionWidth(), 20)))
+		{
 			auto address = offsets.FrameRate1;
 
 			auto value = g_Engine->PS2Read<int>(offsets.FrameRate1);
@@ -54,8 +88,6 @@ void RenderContent()
 
 		if (ImGui::Button("Test Write Memory", ImVec2(ImGui::GetWindowContentRegionWidth(), 20)))
 		{
-			SOCOM1::Offsets offsets;
-
 			g_Engine->PS2Write<int>(offsets.FrameRate1, 30);
 
 			g_Engine->PS2Write<int>(offsets.FrameRate2, 30);
@@ -66,32 +98,22 @@ void RenderContent()
 
 		if (ImGui::Button("Test ResolvePointer", ImVec2(ImGui::GetWindowContentRegionWidth(), 20)))
 		{
-			SOCOM1::Offsets offsets;
-
-			auto base = (CPlayer*)offsets.SEALPointer;
-
-			if (base->IsValid()) {
+			if (PLAYER->IsValid()) {
 			
-				CPlayer::CPlayerPhysics* move = base->PlayerPhysicsPtr();
+				CPlayer::CPlayerPhysics* move = PLAYER->PlayerPhysicsPtr();
 
-				g_Console->printdbg("%s", Console::Colors::DEFAULT, base->LogData().c_str());
+				g_Console->printdbg("%s", Console::Colors::DEFAULT, PLAYER->LogData().c_str());
 			}
+			else
+				g_Console->printdbg("[!] INVALID PLAYER OBJECT\n", Console::Colors::red);
 		}
 
 		if (ImGui::Button("Display Offsets Data", ImVec2(ImGui::GetWindowContentRegionWidth(), 20)))
-		{
-			SOCOM1::Offsets offsets;
-
 			g_Console->printdbg("Dumping Offset Data:\n%s", Console::Colors::DEFAULT, offsets.LogData().c_str());
-		}
 
 		if (ImGui::Button("Check isValid", ImVec2(ImGui::GetWindowContentRegionWidth(), 20)))
 		{
-			Offsets offsets;
-
-			auto base = (CPlayer*)offsets.SEALPointer;
-
-			bool result = base->IsValid();
+			bool result = PLAYER->IsValid();
 
 			switch (result) {
 
@@ -103,29 +125,27 @@ void RenderContent()
 
 		if (ImGui::Button("Dump Player Data", ImVec2(ImGui::GetWindowContentRegionWidth(), 20)))
 		{
-			SOCOM1::Offsets offsets;
-
-			auto base = (SOCOM1::CPlayer*)offsets.SEALPointer;
-
-			if (base->IsValid())
-				g_Console->printdbg("%s", Console::Colors::DEFAULT, base->LogData().c_str());
+			if (PLAYER->IsValid())
+				g_Console->printdbg("%s", Console::Colors::DEFAULT, PLAYER->LogData().c_str());
+			else
+				g_Console->printdbg("[!] INVALID PLAYER OBJECT\n", Console::Colors::red);
 		}
 
 		if (ImGui::Button("Give 552", ImVec2(ImGui::GetWindowContentRegionWidth(), 20)))
 		{
-			SOCOM1:Offsets offsets;
-
-			auto player = (SOCOM1::CPlayer*)offsets.SEALPointer;
-
-			if (player->IsValid())
-				player->PrimaryWeapon = CPlayer::CWeapon::AR_552;
+			if (PLAYER->IsValid()) {
+				//player->PrimaryWeapon = CPlayer::CWeapon::AR_552;
+				PLAYER->PrimaryWeapon = CWeapon::AR_552;
+				for (int i = 0; i < 10; i++)
+					PLAYER->PrimaryMag[i] = 1337;
+			}
+			else
+				g_Console->printdbg("[!] INVALID PLAYER OBJECT\n", Console::Colors::red);
 		}
 
 		if (ImGui::Button("Dump Entity Array", ImVec2(ImGui::GetWindowContentRegionWidth(), 20)))
 		{
-			SOCOM1::MatchData match;
-
-			std::vector<SOCOM1::CPlayer*> ent = match.GetPlayers();
+			std::vector<SOCOM1::CPlayer*> ent = MATCH.GetPlayers();
 
 			if (!ent.empty()) {
 
@@ -136,12 +156,29 @@ void RenderContent()
 
 		}
 
-		if (ImGui::Button("Dump Match Data", ImVec2(ImGui::GetWindowContentRegionWidth(), 20)))
+		if (ImGui::Button("Telpeort All Entities", ImVec2(ImGui::GetWindowContentRegionWidth(), 20)))
 		{
-			SOCOM1::MatchData data;
+			if (PLAYER->IsValid())
+			{
+				std::vector<SOCOM1::CPlayer*> ent = MATCH.GetPlayers();
 
-			g_Console->printdbg("IsMatchEnded: [%i]\n\n", Console::Colors::yellow, data.isMatchEnded());
+				if (!ent.empty()) {
+
+					for (int i = 0; i < ent.size(); i++) {
+						
+						float distance = PLAYER->GetDistanceTo3DObject(PLAYER->Position, ent[i]->Position);
+						g_Console->printdbg("Teleporting Entity:\n- Name: %s\n - Position: { %0.2f, %0.2f, %0.2f }\n - Distance: %0.0fm\n\n", Console::Colors::DEFAULT, ent[i]->GetPlayerName().c_str(), ent[i]->Position.x, ent[i]->Position.y, ent[i]->Position.z, distance);
+						ent[i]->Teleport(PLAYER->Position);
+					}
+				}
+			}
 		}
+
+		if (ImGui::Button("Dump Match Data", ImVec2(ImGui::GetWindowContentRegionWidth(), 20)))
+			g_Console->printdbg("IsMatchEnded: [%i]\n\n", Console::Colors::yellow, MATCH.isMatchEnded());
+
+		if (PLAYER->IsValid())
+			WeaponManager(PLAYER);
 
 		ImGui::Spacing();
 		ImGui::Separator();
