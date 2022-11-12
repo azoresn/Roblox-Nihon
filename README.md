@@ -10,7 +10,7 @@ if (!offsets.SEALPointer.isNullPtr())  // Check if our player object is valid, g
     base.PrimaryMag1 = 1337; // Set Ammo Count in MAG1
 }
 ```
-| ![image](https://user-images.githubusercontent.com/80198020/200977503-e4737e4e-9d2d-4b2e-9554-3b8484872e38.png) | ![image](https://user-images.githubusercontent.com/80198020/200977539-aebf7ecb-c224-4eff-8e20-726f01d12c74.png) | ![image](https://user-images.githubusercontent.com/80198020/200977619-e22fe7a5-b914-4906-9e3c-50f929ea3ebf.png) |  
+| ![image](https://user-images.githubusercontent.com/80198020/200977503-e4737e4e-9d2d-4b2e-9554-3b8484872e38.png) | ![image](https://user-images.githubusercontent.com/80198020/201475737-21591eb0-8858-4575-8ee9-5d9d2e07d1dc.png) | ![image](https://user-images.githubusercontent.com/80198020/200977619-e22fe7a5-b914-4906-9e3c-50f929ea3ebf.png) |  
 | :---: | :---: |  :---: |
 
 ## References & Credits
