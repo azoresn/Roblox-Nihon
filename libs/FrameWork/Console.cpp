@@ -141,6 +141,18 @@ std::string Console::CurrentProcName(CHAR* path)
 	return fullpath.substr(lastSlashIndex + 1);
 }
 
+std::string Console::GetTimeString()
+{
+	auto now = std::chrono::system_clock::now();
+	auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
+	std::time_t now_c = std::chrono::system_clock::to_time_t(now);
+	std::tm now_tm;
+	localtime_s(&now_tm, &now_c);
+	std::stringstream ss{};
+	ss << std::put_time(&now_tm, "%Y-%m-%d");
+	return ss.str();
+}
+
 void Console::DestroyConsole()
 {
 	fclose(stream_in);

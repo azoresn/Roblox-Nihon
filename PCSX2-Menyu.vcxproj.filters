@@ -108,6 +108,9 @@
     <ClInclude Include="libs\FrameWork\Hooking.hpp">
       <Filter>Resource Files\FrameWork\include</Filter>
     </ClInclude>
+    <ClInclude Include="libs\SDK\Sly1.h">
+      <Filter>Resource Files\SDK</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">

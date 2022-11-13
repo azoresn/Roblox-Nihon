@@ -57,13 +57,12 @@ public:
 	//	ADVANCED FUNCTIONS
 	bool writeFile(const char* Path, const char* Text, unsigned int Length, DWORD* out = {});
 	bool readFile(const char* Path, char* Text, unsigned int Length, DWORD* out = {});
-	void SaveCFG();
-	void LoadCFG();
 
 	//	SPECIAL FUNCTIONS
 	const wchar_t* Char2WChar(const char* in);
 	const char* WChar2Char(const wchar_t* in);
 	const wchar_t* String2WChar(std::string in);
 	std::string CurrentProcName(CHAR* path);
+	std::string GetTimeString();
 };
 inline std::unique_ptr<Console> g_Console;
