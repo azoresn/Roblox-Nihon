@@ -3,38 +3,6 @@
 //-----------------------------------------------------------------------------------
 //										MENU
 //-----------------------------------------------------------------------------------
-CWeapon WeaponData;
-void WeaponManager(CPlayer* player)
-{
-	ImGui::Spacing();
-	ImGui::Separator();
-	ImGui::TextCentered("[WEAPON MANAGER]", TRUE, ImColor(0, 255, 255, 200));
-	ImGui::Separator();
-	ImGui::SetNextItemWidth(100);
-	ImGui::Combo("##jfhgjdflkhklsdh", (int*)&WeaponData.e_selectedSlot, WeaponData.AvailSlots, IM_ARRAYSIZE(WeaponData.AvailSlots));
-	ImGui::SameLine();
-	ImGui::SetNextItemWidth(100);
-	switch (WeaponData.e_selectedSlot)
-	{
-		case(0): ImGui::Combo("##jfhgjdflkhklsdh1", (int*)&WeaponData.e_selected_Primary, WeaponData.PrimaryWeapons, IM_ARRAYSIZE(WeaponData.PrimaryWeapons)); break;
-		case(1): ImGui::Combo("##kdgdsazhljfna", (int*)&WeaponData.e_selected_Secondary, WeaponData.SecondaryWeapons, IM_ARRAYSIZE(WeaponData.SecondaryWeapons)); break;
-		case(2): ImGui::Combo("##zjdfhbadeh", (int*)&WeaponData.e_selected_Equipment, WeaponData.EquipmentWeapon, IM_ARRAYSIZE(WeaponData.EquipmentWeapon)); break;
-		case(3): ImGui::Combo("##hsdfgjsytkiet", (int*)&WeaponData.e_selected_Equipment, WeaponData.EquipmentWeapon, IM_ARRAYSIZE(WeaponData.EquipmentWeapon)); break;
-		case(4): ImGui::Combo("##gjnkdtoythmyuk", (int*)&WeaponData.e_selected_Equipment, WeaponData.EquipmentWeapon, IM_ARRAYSIZE(WeaponData.EquipmentWeapon)); break;
-	}
-	if (ImGui::Button("GIVE WEAPON", ImVec2(ImGui::GetContentRegionAvail().x, 0)))
-	{
-		switch (WeaponData.e_selectedSlot)
-		{
-			case 0:        player->GiveWeapon(WeaponData.e_selectedSlot, WeaponData.e_selected_Primary); break;
-			case 1:        player->GiveWeapon(WeaponData.e_selectedSlot, WeaponData.e_selected_Secondary); break;
-			case 2:        player->GiveWeapon(WeaponData.e_selectedSlot, WeaponData.e_selected_Equipment); break;
-			case 3:        player->GiveWeapon(WeaponData.e_selectedSlot, WeaponData.e_selected_Equipment); break;
-			case 4:        player->GiveWeapon(WeaponData.e_selectedSlot, WeaponData.e_selected_Equipment); break;
-		}
-	}
-}
-
 
 void InitStyle()
 {
@@ -63,141 +31,135 @@ void InitStyle()
 	}
 }
 
-void RenderContent()
-	{
-		ImGui::Text("BASE PCSX2 v1.7 MENU FRAMEWORK");
-		ImGui::Text("BUILD VERSION: v1.0");
-		ImGui::Text("BUILD DATE: 11/9/2022");
+static ImVec4 defaultColor = ImVec4(16.0f / 255.0f, 16.0f / 255.0f, 16.0f / 255.0f, 128.0f / 255.0f);
+static ImVec4 color_picker = ImVec4(16.0f / 255.0f, 16.0f / 255.0f, 16.0f / 255.0f, 128.0f / 255.0f);
 
-		ImGui::Spacing();
-		ImGui::Separator();
-		ImGui::Spacing();
+void ChangeOutlineColor(ImVec4 Color)
+{
 
-		SOCOM1::Offsets offsets;
-		SOCOM1::CPlayer* PLAYER = (CPlayer*)offsets.SEALPointer;
-		SOCOM1::MatchData MATCH;
+	// Convert ImVec4
+	float test[4] = { (Color.x * 255), (Color.y * 255), (Color.z * 255), (Color.w * 255) };
 
-		if (ImGui::Button("Test Read Memory", ImVec2(ImGui::GetWindowContentRegionWidth(), 20)))
-		{
-			auto address = offsets.FrameRate1;
+	Offsets offsets;
+	auto address = offsets.CustomColors;
+	if (g_Engine->PS2Read<int>(address) != NULL)
+		g_Engine->PS2Write<int>(address, NULL);
 
-			auto value = g_Engine->PS2Read<int>(offsets.FrameRate1);
-
-			g_Console->printdbg("Test Read Memory:\nFrameRate1: [%08X]\nVALUE: [%i]\n\n", Console::Colors::blue, address, value);
-		}
-
-		if (ImGui::Button("Test Write Memory", ImVec2(ImGui::GetWindowContentRegionWidth(), 20)))
-		{
-			g_Engine->PS2Write<int>(offsets.FrameRate1, 30);
-
-			g_Engine->PS2Write<int>(offsets.FrameRate2, 30);
-
-			g_Console->printdbg("Test Write Memory:\nFrameRate1: [%i]\nFrameRate2: [%i]\n\n", Console::Colors::blue, g_Engine->PS2Read<int>(offsets.FrameRate1), g_Engine->PS2Read<int>(offsets.FrameRate2));
-
-		}
-
-		if (ImGui::Button("Test ResolvePointer", ImVec2(ImGui::GetWindowContentRegionWidth(), 20)))
-		{
-			if (PLAYER->IsValid()) {
-			
-				CPlayer::CPlayerPhysics* move = PLAYER->PlayerPhysicsPtr();
-
-				g_Console->printdbg("%s", Console::Colors::DEFAULT, PLAYER->LogData().c_str());
-			}
-			else
-				g_Console->printdbg("[!] INVALID PLAYER OBJECT\n", Console::Colors::red);
-		}
-
-		if (ImGui::Button("Display Offsets Data", ImVec2(ImGui::GetWindowContentRegionWidth(), 20)))
-			g_Console->printdbg("Dumping Offset Data:\n%s", Console::Colors::DEFAULT, offsets.LogData().c_str());
-
-		if (ImGui::Button("Check isValid", ImVec2(ImGui::GetWindowContentRegionWidth(), 20)))
-		{
-			bool result = PLAYER->IsValid();
-
-			switch (result) {
-
-				case (TRUE):	g_Console->printdbg("isValid: [%i]\n", Console::Colors::yellow, result); break;
-
-				case (FALSE):	g_Console->printdbg("isValid: [%i]\n", Console::Colors::red, result); break;
-			}
-		}
-
-		if (ImGui::Button("Dump Player Data", ImVec2(ImGui::GetWindowContentRegionWidth(), 20)))
-		{
-			if (PLAYER->IsValid())
-				g_Console->printdbg("%s", Console::Colors::DEFAULT, PLAYER->LogData().c_str());
-			else
-				g_Console->printdbg("[!] INVALID PLAYER OBJECT\n", Console::Colors::red);
-		}
-
-		if (ImGui::Button("Give 552", ImVec2(ImGui::GetWindowContentRegionWidth(), 20)))
-		{
-			if (PLAYER->IsValid()) {
-				//player->PrimaryWeapon = CPlayer::CWeapon::AR_552;
-				PLAYER->PrimaryWeapon = CWeapon::AR_552;
-				for (int i = 0; i < 10; i++)
-					PLAYER->PrimaryMag[i] = 1337;
-			}
-			else
-				g_Console->printdbg("[!] INVALID PLAYER OBJECT\n", Console::Colors::red);
-		}
-
-		if (ImGui::Button("Dump Entity Array", ImVec2(ImGui::GetWindowContentRegionWidth(), 20)))
-		{
-			std::vector<SOCOM1::CPlayer*> ent = MATCH.GetPlayers();
-
-			if (!ent.empty()) {
-
-				for (int i = 0; i < ent.size(); i++)
-					g_Console->printdbg("%s", Console::Colors::DEFAULT, ent[i]->LogData().c_str());
-
-			}
-
-		}
-
-		if (ImGui::Button("Telpeort All Entities", ImVec2(ImGui::GetWindowContentRegionWidth(), 20)))
-		{
-			if (PLAYER->IsValid())
-			{
-				std::vector<SOCOM1::CPlayer*> ent = MATCH.GetPlayers();
-
-				if (!ent.empty()) {
-
-					for (int i = 0; i < ent.size(); i++) {
-						
-						float distance = PLAYER->GetDistanceTo3DObject(PLAYER->Position, ent[i]->Position);
-						g_Console->printdbg("Teleporting Entity:\n- Name: %s\n - Position: { %0.2f, %0.2f, %0.2f }\n - Distance: %0.0fm\n\n", Console::Colors::DEFAULT, ent[i]->GetPlayerName().c_str(), ent[i]->Position.x, ent[i]->Position.y, ent[i]->Position.z, distance);
-						ent[i]->Teleport(PLAYER->Position);
-					}
-				}
-			}
-		}
-
-		if (ImGui::Button("Dump Match Data", ImVec2(ImGui::GetWindowContentRegionWidth(), 20)))
-			g_Console->printdbg("IsMatchEnded: [%i]\n\n", Console::Colors::yellow, MATCH.isMatchEnded());
-
-		if (PLAYER->IsValid())
-			WeaponManager(PLAYER);
-
-		ImGui::Spacing();
-		ImGui::Separator();
-		ImGui::Spacing();
-
-		if (ImGui::Button("UNHOOK DLL", ImVec2(ImGui::GetWindowContentRegionWidth(), 20)))
-			g_Killswitch = TRUE;
+	auto colorAddress = offsets.EntityOutlineColors;
+	for (int i = 0; i < 4; i++) {
+		g_Engine->PS2Write<int8_t>(colorAddress, test[i]);
+		colorAddress++;
 	}
+
+	g_Engine->PS2Write<int>(address, 0xAC910268);
+}
+
+
+void RGBSLY()
+{
+	// Convert ImVec4
+	float test[4] = { (g_Menu->dbg_RAINBOW.Value.x * 255), (g_Menu->dbg_RAINBOW.Value.y * 255), (g_Menu->dbg_RAINBOW.Value.z * 255), (g_Menu->dbg_RAINBOW.Value.w * 255) };
+	Offsets offsets;
+	auto colorAddress = offsets.EntityOutlineColors;
+	for (int i = 0; i < 4; i++) {
+		g_Engine->PS2Write<int8_t>(colorAddress, test[i]);
+		colorAddress++;
+	}
+}
+
+// Default Sly Backpack = 0x447A00
+static bool bSlyOutline = FALSE;
+static bool bRGB_SLY = FALSE;
+static bool bActiveOutline = FALSE;
+void RenderContent()
+{
+	//  Initize so that we can set and store ImGui Content Positions
+	ImGuiWindow* window = GImGui->CurrentWindow;
+	ImVec2 ToolLocation;
+
+	ImGui::Text("PCSX2 v1.7 MENU FRAMEWORK");
+	ImGui::Text("BUILD VERSION: v1.0");
+	ImGui::Text("DATE: %s", g_Console->GetTimeString().c_str());
+
+	ImGui::Spacing();
+	ImGui::Separator();
+	ImGui::Spacing();
+
+	Sly1::Offsets offsets;
+	Sly1::JT* PLAYER = (Sly1::JT*)offsets.slyPointer;
+
+	ImGui::Toggle(" Sly Outline ", &bSlyOutline);
+	if (bSlyOutline)
+	{
+		window->DC.CursorPos.x = (window->DC.CursorPos.x + 10);
+		ToolLocation.x = window->DC.CursorPos.x;
+		ImGui::SameLine();
+		if (ImGui::Button("RESET"))
+			ChangeOutlineColor(defaultColor);
+		ImGui::SameLine();
+		ImGui::ColorEdit4("##fhajwdegfjSG", (float*)&color_picker, ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_AlphaPreviewHalf | ImGuiColorEditFlags_NoInputs);
+		ImGui::SameLine();
+		ImGui::Checkbox("ACTIVE", &bActiveOutline);
+		if (bActiveOutline)
+			ChangeOutlineColor(color_picker);
+
+	}
+
+	if (ImGui::Toggle("RGB SLY", &bRGB_SLY))
+	{
+		// on deactivate restore sky outline to normal
+		if (!bRGB_SLY)
+			ChangeOutlineColor(defaultColor);
+	}
+	
+	if (ImGui::Button("Test Read Memory", ImVec2(ImGui::GetWindowContentRegionWidth(), 20)))
+	{
+		auto address = offsets.CustomColors;
+
+		auto value = g_Engine->PS2Read<int>(address);
+
+		g_Console->printdbg("Test Read Memory Address: %llX\nVALUE: [%08X]\n\n", Console::Colors::blue, (address + BasePS2MemorySpace), value);
+	}
+
+	if (ImGui::Button("Test Write Memory", ImVec2(ImGui::GetWindowContentRegionWidth(), 20)))
+	{
+
+		auto address = offsets.CustomColors;
+
+		unsigned int value = g_Engine->PS2Read<int>(address);
+
+		if (value != NULL)
+			g_Engine->PS2Write<int>(address, NULL);
+		else
+			g_Engine->PS2Write<int>(address, 0xAC910268);
+
+		g_Console->printdbg("Test Write Memory: %llX\nVALUE: [%08X]\n\n", Console::Colors::blue, address, g_Engine->PS2Read<int>(address));
+
+	}
+
+	if (ImGui::Button("Display Offsets Data", ImVec2(ImGui::GetWindowContentRegionWidth(), 20)))
+		g_Console->printdbg("[+] LOG::OffsetData\n%s", Console::Colors::DEFAULT, offsets.LogData().c_str());
+
+	ImGui::Spacing();
+	ImGui::Separator();
+	ImGui::Spacing();
+
+	if (ImGui::Button("UNHOOK DLL", ImVec2(ImGui::GetWindowContentRegionWidth(), 20)))
+		g_Killswitch = TRUE;
+}
 
 void Menu::Draw()
 {
 	if (g_GameVariables->m_ShowMenu)
+	{
 		MainMenu();
+	
+		if (g_GameVariables->m_ShowDemo)
+			ImGui::ShowDemoWindow();
+	}
 
 	if (g_GameVariables->m_ShowHud)
 		HUD(&g_GameVariables->m_ShowHud);
-
-	if (g_GameVariables->m_ShowDemo)
-		ImGui::ShowDemoWindow();
 }
 
 void Menu::MainMenu()
@@ -231,5 +193,6 @@ void Menu::HUD(bool* p_open)
 
 void Menu::Loops()
 {
-
+	if (bRGB_SLY)
+		RGBSLY();
 }

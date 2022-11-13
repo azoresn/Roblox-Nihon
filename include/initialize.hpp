@@ -17,10 +17,11 @@ void InitializeFramework()
     g_Engine = std::make_unique<PS2>();
     g_Console = std::make_unique<Console>();
     g_Console->InitializeConsole("SOCOM 1 - INTERNAL DEBUG");
-    g_Console->printdbg("[+] SOCOM INTERNAL\n[+] BUILD VERSION: v1.0\n[+] BUILD DATE: 11/9/22\n[+] Created by NightFyre\n\n", Console::Colors::yellow);
-    g_Console->printdbg("[!] THIS IS ONLY FOR SOCOM 1 (black edition)\n[!] THIS IS A PREVIEW BUILD\n[!] PLEASE DON'T INJECT UNTIL YOU HAVE LAUNCHED THE GAME [INSERT]\n\n", Console::Colors::red);
+    g_Console->printdbg("[+] SLY INTERNAL\n[+] BUILD VERSION: v1.0\n[+] BUILD DATE: 11/13/22\n[+] Created by NightFyre\n\n", Console::Colors::yellow);
+    g_Console->printdbg("[!] THIS IS ONLY FOR SLY 1\n[!] THIS IS A PREVIEW BUILD\n[!] PLEASE DON'T INJECT UNTIL YOU HAVE LAUNCHED THE GAME [INSERT]\n\n", Console::Colors::red);
+
     g_Console->printdbg("PCSX2 LAUNCHED\n", Console::Colors::green);
-    g_Console->printdbg("[!] PLEASE LAUNCH SOCOM & TOGGLE FULLSCREEN\n\n", Console::Colors::yellow);
+    g_Console->printdbg("[!] PLEASE LAUNCH SLY & TOGGLE FULLSCREEN\n\n", Console::Colors::yellow);
 
 
     // WAIT FOR USER INPUT

@@ -180,6 +180,7 @@
     <ClInclude Include="libs\Minhook\table64.h" />
     <ClInclude Include="libs\Minhook\trampoline.h" />
     <ClInclude Include="libs\SDK\engine.h" />
+    <ClInclude Include="libs\SDK\Sly1.h" />
     <ClInclude Include="libs\SDK\SOCOM1.h" />
   </ItemGroup>
   <ItemGroup>

@@ -57,3 +57,5 @@ x64/Debug/hooking.obj.enc
 x64/Debug/imgui_impl_win32.obj.enc
 x64/Debug/overlay.obj.enc
 x64/Debug/PCSX2-Menyu.Build.CppClean.log
+.vs/PCSX2-Menyu/v16/ipch/AutoPCH/438a724fd8fff3f2/SLY1.ipch
+.vs/PCSX2-Menyu/v16/ipch/AutoPCH/36860abd3bd790d/SOCOM1.ipch
