@@ -490,7 +490,8 @@ namespace SOCOM1 {
 			return "";
 		}
 	};
-
+	
+	/*
 	//	Debug Weapon Manager
 	//	Will not work in this scope!
 	//	Does not work in current state, enum values need to be passed but instead is passing enum positions
@@ -635,4 +636,5 @@ namespace SOCOM1 {
 		if (PLAYER->IsValid())
 			WeaponManager(PLAYER);
 	}
+	*/
 }

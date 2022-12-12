@@ -1,5 +1,8 @@
 #pragma once
 #include <windows.h>
+#include <string>
+#include <vector>
+#include <memory>
 
 //	Establish Pointer Paths and base address
 inline HMODULE g_hModule{};
