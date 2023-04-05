@@ -1,17 +1,14 @@
-#include "initialize.hpp"
+#pragma once
+#include "pch.h"
+#include "example.hpp"
+
+//---------------------------------------------------------------------------------------------------
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD  dwCallReason, LPVOID lpReserved)
 {
-    g_hModule = hModule;
-    switch (dwCallReason) {
-        case (DLL_PROCESS_ATTACH): {
-            DisableThreadLibraryCalls(hModule);
-            CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)NightFyre_ClientInitialize, g_hModule, NULL, NULL);
-            break;
-        }
-        case (DLL_PROCESS_DETACH): {
-            g_Killswitch = TRUE;
-            break;
-        }
+    switch (dwCallReason) 
+    {
+        case (DLL_PROCESS_ATTACH):      CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)ClientInitialize, hModule, NULL, NULL);    break;
+        case (DLL_PROCESS_DETACH):      g_Running ^= 1;                                                                             break;
     }
     return TRUE;
 }
