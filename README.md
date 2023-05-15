@@ -18,3 +18,4 @@
 - [Dear ImGui](https://github.com/ocornut/imgui)
 - [Minhook Hooking Library](https://github.com/TsudaKageyu/minhook)
 - [Sly Cooper Modding Community](https://discord.com/invite/2GSXcEzPJA) 
+- [SOCOM Modding Community](https://discord.com/invite/PCJGrwMdUS) 
