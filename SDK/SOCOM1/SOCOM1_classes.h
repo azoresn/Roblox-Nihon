@@ -148,7 +148,7 @@ namespace PlayStation2
 		public:
 			bool							IsValid();
 			bool							IsAlive();
-			class CPlayerPhysics*			PlayerPhysicsPtr();
+			class CZSealBody*				PlayerPhysicsPtr();
 			std::string						GetPlayerName();
 			std::string						GetTeamName();
 			std::string						GetWeaponName(unsigned int Weapon);
