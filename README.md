@@ -16,8 +16,8 @@ This framework provides tools to port older codes to a more modern approach, usi
 2. Initialize the SDK
  - `PlayStation2::InitSDK();`
 
- 3. Do Stuff
- https://github.com/NightFyre/PCSX2-CheatFrameWork/blob/1cdaa7f5a22868f86a9a7beeb7a637c6f58a8f8e/dllmain.cpp#L8-L44
+3. Do Stuff
+https://github.com/NightFyre/PCSX2-CheatFramework/blob/70dcf7dc51747df014f5d537a3188b8de1fe95a2/dllmain.cpp#L18-L29
 
 ## CODE EXAMPLES
 
