@@ -14,8 +14,16 @@
 #include <sstream>
 #include <algorithm>
 
-//	Include SDK Files
-#include "SDK/engine_package.h"
+//	RENDERING APIS
+#include <d3d11.h>
+#include <d3d12.h>
+#include <dxgi1_4.h>
 
-// Custom Game Includes
-#include "SDK/SOCOM1/SOCOM1_package.h"
+//	Include SDK Files
+#include "SDK/engine_package.h"	//	Core PS2 Helper Classes, Structs & Functions
+#include "SDK/pcsx2_package.h"	//	Core PCSX2 Classes , Structs & Functions
+
+// Custom Game Packages 
+// - review readme and examples for better understanding with including a game package.
+//	#include "SDK/GamePackage/SOCOM1/SOCOM1_package.h"
+//	#include "SDK/GamePackage/SlyCooper1/SlyCooper_Package.h"
