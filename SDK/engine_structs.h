@@ -3,11 +3,10 @@
 
 /**
  * Name: PlayStation2 - PCSX2
- * Version: 0.0.1
+ * Version: 1.0.0
  * Author: NightFyre
 */
 
-#pragma pack(push, 0x01)
 namespace PlayStation2
 {
 
@@ -100,6 +99,8 @@ namespace PlayStation2
 			z += other.z;
 			return *this;
 		}
+
+		bool operator==(Vector3 other) const { return other.x == x && other.y == y && other.z == z; }
 
 		// Length (magnitude) of the vector
 		float length() const { return std::sqrt(x * x + y * y + z * z); }
@@ -250,5 +251,24 @@ namespace PlayStation2
 		Vector2		m_WindowSize{};
 	};
 
+	enum EConsoleColors : int 
+	{
+		dark_blue = 1,
+		dark_green,
+		dark_teal,
+		dark_red,
+		dark_pink,
+		dark_yellow,
+		dark_white,
+		dark_gray,
+		blue,
+		green,
+		teal,
+		red,
+		pink,
+		yellow,
+		white,
+		DEFAULT = white,
+	};
+
 }
-#pragma pack(pop)

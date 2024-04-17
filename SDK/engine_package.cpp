@@ -3,166 +3,269 @@
 
 /**
  * Name: PlayStation2 - PCSX2
- * Version: 0.0.1
+ * Version: 1.0.0
  * Author: NightFyre
 */
 
-#pragma pack(push, 0x01)
 namespace PlayStation2
 {
-
-    // --------------------------------------------------
-    // # Forwards
-    // --------------------------------------------------
-
-    GSRenderer**        CGlobals::g_gs_renderer;
-    GSDevice**          CGlobals::g_gs_device;
-    EmuThread**         CGlobals::g_emu_thread;
-
     //----------------------------------------------------------------------------------------------------
     //										CORE
     //-----------------------------------------------------------------------------------
 
     ///---------------------------------------------------------------------------------------------------
-    bool InitSDK(const std::string& moduleName, unsigned int gRenderer, unsigned int gDevice, unsigned int gEmu)
+    bool InitSDK(const std::string& moduleName, unsigned int gDevice)
     {
-        auto m_modBase = reinterpret_cast<__int64>(GetModuleHandleA(moduleName.c_str()));
-        if (!m_modBase)
-            return FALSE;
+        bool result{ false };
 
-        g_Engine = std::make_unique<Engine>();                      // Initialize Core Class
-        Memory::Memory();                                           //  Init Memory 
+        HANDLE pHand = GetModuleHandleA(moduleName.c_str());
+        if (!pHand)
+            return result;
 
-        //  Initialize PCSX2 Classes
-        CGlobals::g_gs_renderer = reinterpret_cast<GSRenderer**>(m_modBase + gRenderer);
-        CGlobals::g_gs_device   = reinterpret_cast<GSDevice**>(m_modBase + gDevice);
-        CGlobals::g_emu_thread  = reinterpret_cast<EmuThread**>(m_modBase + gEmu);
+        CGlobals::g_gs_device = reinterpret_cast<GSDevice*>(*(__int64*)(Memory::GetAddr(gDevice)));
+        if (!CGlobals::g_gs_device)
+            return false;
 
-        return TRUE;
+        CGlobals::g_console = Console::GetDefaultInstance();
+        CGlobals::g_engine = Engine::GetDefaultInstance();
+        CGlobals::g_memory = Memory::GetDefaultInstance();
+
+        Console::LogMsg("[+] PCSX2 Framework Client Initialized!\nmodBase:\t0x%llX\nPS2ModBase:\t0x%llX\ng_gs_device:\t0x%llX\nRenderAPI:\t%d\n", 
+            (__int64)pHand,
+            PS2Memory::GetModuleBase(), 
+            CGlobals::g_gs_device, 
+            GSDevice::GetRenderAPI()
+        );
+        return true;
     }
 
     ///---------------------------------------------------------------------------------------------------
     // Template Initialization function
     //  NOTE: offsets will not always be correct
-    bool InitSDK() { return InitSDK("pcsx2-qt.exe", 0x40D4B98, 0x40D4AA0, 0xDD30BD8); }
+    //  NOTE2: PCSX2 v1.7.5617
+    bool InitSDK() { return InitSDK("pcsx2-qt.exe", PCSX2::o_gs_device); }
 
     ///---------------------------------------------------------------------------------------------------
-    void ShutdownSDK()
+    void ShutdownSDK() { }
+
+    //----------------------------------------------------------------------------------------------------
+    //										CGLOBALS
+    //-----------------------------------------------------------------------------------
+
+#pragma region  //  CGLOBALS
+
+    //----------------------------------------------------------------------------------------------------
+    //  STATICS
+    GSRenderer*             CGlobals::g_gs_renderer;
+    GSDevice*               CGlobals::g_gs_device;
+    EmuThread*              CGlobals::g_emu_thread;
+    Console*                CGlobals::g_console;
+    Engine*                 CGlobals::g_engine;
+    Memory*                 CGlobals::g_memory;
+
+#pragma endregion
+
+    //----------------------------------------------------------------------------------------------------
+    //										CONSOLE
+    //-----------------------------------------------------------------------------------
+
+#pragma region  //  CONSOLE
+
+    ///---------------------------------------------------------------------------------------------------
+    //  STATICS
+    FILE*                   Console::m_pInStream;
+    FILE*                   Console::m_pOutStream;
+    FILE*                   Console::m_pErrStream;
+    HANDLE                  Console::m_pHandle;
+    HWND	                Console::m_pWndw;
+    HANDLE                  Console::m_pPipe;
+    bool                    Console::m_isConsoleAllocated{ false };
+    bool                    Console::m_isVisible{ true };
+    std::mutex              Console::m_mutex;
+    Console*                Console::m_instance = new Console();
+
+    ///---------------------------------------------------------------------------------------------------
+    Console::Console()
     {
-        // clear pointers   (effectively freeing the memory)
-        CGlobals::g_gs_renderer = nullptr;     
-        CGlobals::g_gs_device   = nullptr;  
-        CGlobals::g_emu_thread  = nullptr;  
-        
-        //  cleanup console if not handled by the user
-        if (g_Engine->isConsolePresent())
-            g_Engine->DestroyConsole();
+        if (m_isConsoleAllocated)
+            return;
+
+        AllocConsole();														//  Allocate console for output
+        m_pHandle = GetStdHandle(STD_OUTPUT_HANDLE);					    //  Store handle to console
+        m_pWndw = GetConsoleWindow();									    //  Store WindowHandle to console
+        freopen_s(&m_pInStream, "CONIN$", "r", stdin);	                    //  Establish input stream
+        freopen_s(&m_pOutStream, "CONOUT$", "w", stdout);	                //  Establish ouput stream
+        freopen_s(&m_pErrStream, "CONOUT$", "w", stderr);	                //  Establish error stream
+        ShowWindow(m_pWndw, m_isVisible ? SW_SHOW : SW_HIDE);		        //	Show console window based on visible state
+        m_isConsoleAllocated = true;
     }
 
     ///---------------------------------------------------------------------------------------------------
-	unsigned int GetVtblOffset(void* czInstance, const char* dwModule)
-	{
-		uintptr_t moduleBase = (uintptr_t)GetModuleHandleA(NULL);
-		return ((*(unsigned int*)czInstance) - moduleBase);
-	}
+    Console::Console(const char* title)
+    {
+        if (m_isConsoleAllocated)
+            return;
+
+        AllocConsole();														//  Allocate console for output
+        m_pHandle = GetStdHandle(STD_OUTPUT_HANDLE);					    //  Store handle to console
+        m_pWndw = GetConsoleWindow();									    //  Store WindowHandle to console
+        freopen_s(&m_pInStream, "CONIN$", "r", stdin);	                    //  Establish input stream
+        freopen_s(&m_pOutStream, "CONOUT$", "w", stdout);	                //  Establish ouput stream
+        freopen_s(&m_pErrStream, "CONOUT$", "w", stderr);	                //  Establish error stream
+        ShowWindow(m_pWndw, m_isVisible ? SW_SHOW : SW_HIDE);		        //	Show console window based on visible state
+        SetConsoleTitleA(title);                                            //  Set console window title
+        m_isConsoleAllocated = true;
+    }
 
     ///---------------------------------------------------------------------------------------------------
-	int GetVtblIndex(void* fncPtr, void* vTblAddr) { return (((__int64)fncPtr - (__int64)vTblAddr) / sizeof(void*)) - 1; }
+    Console::~Console() { DestroyConsole(); }
+
+    ///---------------------------------------------------------------------------------------------------
+    Console* Console::GetDefaultInstance() { return m_instance; }
+
+    ///---------------------------------------------------------------------------------------------------
+    void Console::DestroyConsole()
+    {
+        if (!m_isConsoleAllocated)
+            return;
+
+        m_isConsoleAllocated = false;                                       //
+        m_isVisible = true;                                                 //
+        fclose(m_pInStream);                                                //  
+        fclose(m_pOutStream);                                               //  
+        fclose(m_pErrStream);                                               //  
+        DestroyWindow(m_pWndw);                                             //  
+        FreeConsole();
+    }	
+    
+    //---------------------------------------------------------------------------------------------------
+    void Console::LogMsgEx(FILE* stream, HANDLE pHand, const char* msg, EConsoleColors color, va_list args)
+    {
+        if (!m_isConsoleAllocated)                                          //  only write when console is allocated
+            return;
+
+        std::lock_guard<std::mutex> lock(m_mutex);                          //  thread safety
+        SetConsoleTextAttribute(pHand, color);					            //	Set output text color
+        vfprintf(stream, msg, args);								        //	print
+        SetConsoleTextAttribute(pHand, EConsoleColors::DEFAULT);	        //	Restore output text color to default
+    }
+
+    //---------------------------------------------------------------------------------------------------
+    void Console::LogMsg(const char* text, ...)
+    {
+        if (!m_isConsoleAllocated)
+            return;
+        
+        va_list args;												        //	declare arguments
+        va_start(args, text);										        //	get arguments
+        LogMsgEx(m_pOutStream, m_pHandle, text, EConsoleColors::DEFAULT, args);//	print
+        va_end(args);												        //	clear arguments
+    }
+
+    //---------------------------------------------------------------------------------------------------
+    void Console::cLogMsg(const char* text, EConsoleColors color, ...)
+    {
+        if (!m_isConsoleAllocated)
+            return;
+
+        va_list args;												        //	declare arguments
+        va_start(args, color);										        //	get arguments
+        LogMsgEx(m_pOutStream, m_pHandle, text, color, args);		        //	print
+        va_end(args);												        //	clear arguments
+    }
+
+#pragma endregion
 
     //----------------------------------------------------------------------------------------------------
     //										ENGINE
     //-----------------------------------------------------------------------------------
 
-    ///---------------------------------------------------------------------------------------------------
-    void Engine::CreateConsole(const char* title, bool bShow)
-    {
-        AllocConsole();														//  Allocate console for output
-        p_bShowWindow = bShow;                                              //  set visible flag
-        p_wndw_handle = GetConsoleWindow();									//  Store WindowHandle to console
-        p_console_handle = GetStdHandle(STD_OUTPUT_HANDLE);					//  Store handle to console
-        freopen_s(&p_fin_stream, "CONIN$", "r", stdout);	                //  Establish input stream
-        freopen_s(&p_fout_stream, "CONOUT$", "w", stdout);	                //  Establish ouput stream
-        freopen_s(&p_ferr_stream, "CONOUT$", "w", stdout);	                //  Establish error stream
-        SetConsoleTitleA(title);					                        //  Set console title
-        ShowWindow(p_wndw_handle, p_bShowWindow ? SW_SHOW : SW_HIDE);		//	Show console window based on visible state
-        p_bConsole = TRUE;
-    }   
+#pragma region  //  ENGINE
 
-    ///---------------------------------------------------------------------------------------------------
-    void Engine::DestroyConsole()
-    {
-        if (!p_bConsole || !p_fout_stream)
-            return;
-
-        p_bConsole      = false;                                            //
-        p_bShowWindow   = false;                                            //
-        fclose(p_fout_stream);                                              //  
-        fclose(p_fin_stream);                                               //  
-        fclose(p_ferr_stream);                                              //  
-        DestroyWindow(p_wndw_handle);                                       //  
-        FreeConsole();                                                      //  
-    }
-
-    ///---------------------------------------------------------------------------------------------------
-    bool Engine::isConsolePresent() { return this->p_bConsole; }
+    Engine* Engine::m_instance = new Engine();
 
     ///---------------------------------------------------------------------------------------------------
     //  D3D Template Hook
-    void Engine::D3D11HookPresent()
+    bool Engine::D3D11HookPresent(IDXGISwapChain* p, void* ofnc, void* nFnc)
     {
-        //  Get Device Context
-        auto device = *CGlobals::g_gs_device;
-        if (!device)
-            return;
+        if (GSDevice::GetRenderAPI() != RenderAPI::D3D11)
+            return false;
 
         // Get GS Device
-        auto d3d11 = reinterpret_cast<GSDevice11*>(device);
+        auto d3d11 = static_cast<GSDevice11*>(CGlobals::g_gs_device);
         if (!d3d11)
-            return;
+            return false;
 
-        this->m_pSwapChain = d3d11->GetSwapChain();
-        if (!this->m_pSwapChain)
-            return;
+        //  Get SwapChain
+        p = d3d11->GetSwapChain();
+        if (!p)
+            return false;
 
         // Hook
-        hkVFunction(this->m_pSwapChain, 8, this->fnc_oIDXGISwapChainPresent, this->hkPresent);
+        hkVFunction(p, 8, ofnc, nFnc);
+
+        return true;
     }
-    void Engine::D3D11UnHookPresent()
+
+    ///---------------------------------------------------------------------------------------------------
+    void Engine::D3D11UnHookPresent(IDXGISwapChain* p, void* ofnc)
     {
-        if (!this->m_pSwapChain)
+        if (!p)
             return;
 
-        hkRestoreVFunction(this->m_pSwapChain, 8, this->fnc_oIDXGISwapChainPresent);
-        this->m_pSwapChain = nullptr;
-        this->fnc_oIDXGISwapChainPresent = NULL;
+        hkRestoreVFunction(p, 8, ofnc);
+        p = nullptr;
+        ofnc = 0;
     }
-    HRESULT APIENTRY Engine::hkPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT Flags)
-    {
-        //  Additional logic goes here
 
-        // detour exit
-        return g_Engine->fnc_oIDXGISwapChainPresent(pSwapChain, SyncInterval, Flags);
-    }
+    ///---------------------------------------------------------------------------------------------------
+    Engine* Engine::GetDefaultInstance() { return m_instance; }
+
+#pragma endregion
 
     //----------------------------------------------------------------------------------------------------
 	//										MEMORY
 	//-----------------------------------------------------------------------------------
 
-    //  Constructors
+#pragma region  //  MEMORY
+
+    //----------------------------------------------------------------------------------------------------
+    //  STATICS
+    __int64                     Memory::dwGameBase;
+    __int64                     Memory::dwEEMem;
+    __int64                     Memory::BasePS2MemorySpace;
+    ProcessInfo                 Memory::Process;                                        
+    bool                        Memory::m_isInitialized;                
+    Memory*                     Memory::m_instance = new Memory();
+
+    //----------------------------------------------------------------------------------------------------
+    //  CONSTRUCTORS
     Memory::Memory()
     {
+        if (m_isInitialized)
+            return;
+
         if (ObtainProcessInfo(Process))
         {
-            Memory::dwGameBase          = (uintptr_t)Process.m_ModuleBase;
-            Memory::dwEEMem             = (uintptr_t)GetProcAddress((HMODULE)Process.m_ModuleHandle, "EEmem");
-            Memory::BasePS2MemorySpace  = *(uintptr_t*)dwEEMem;
+            Memory::dwGameBase          = (__int64)Process.m_ModuleBase;
+            Memory::dwEEMem             = (__int64)GetProcAddress((HMODULE)Process.m_ModuleHandle, "EEmem");
+            Memory::BasePS2MemorySpace  = *(__int64*)dwEEMem;
+            m_isInitialized = true;
         }
     }
     Memory::~Memory() {}
 
     ///---------------------------------------------------------------------------------------------------
     //	[MEMORY]
-    //  
+    Memory* Memory::GetDefaultInstance() { return m_instance; }
+
+    ///---------------------------------------------------------------------------------------------------
+    __int64 Memory::GetModuleBase() { return dwGameBase; }
+
+    ///---------------------------------------------------------------------------------------------------
+    __int64 Memory::GetAddr(unsigned int offset) { return dwGameBase + offset; }
+
+    ///---------------------------------------------------------------------------------------------------
     bool Memory::ObtainProcessInfo(ProcessInfo& pInfo)
     {
         // Get initial process info
@@ -211,42 +314,24 @@ namespace PlayStation2
 
     ///---------------------------------------------------------------------------------------------------
     //	[MEMORY]
-    // Converts shortened RAW PS2 format address to x64 address
-    // EXAMPLE:
-    // - Original RAW  : 2048D548  
-    // - Shortened RAW : 0x48D548
-    // - Base Memory   : 7FF660000000
-    // - Result        : 7FF660000000 + 0x48D548 = 7FF66048D548
-    uintptr_t Memory::GetPS2Address(unsigned int RAW_PS2_OFFSET) { return (Memory::BasePS2MemorySpace + RAW_PS2_OFFSET); }
-
-    ///---------------------------------------------------------------------------------------------------
-    //	[MEMORY]
-    // Assigns Shortened RAW PS2 Format Code to Class Pointer
-    // <returns>ClassPointer</returns>
-    // Note: Must be a base address
-    // - CPlayer
-    // - CCamera
-    uintptr_t Memory::DereferencePtr(unsigned int RAW_PS2_OFFSET) { return *(int32_t*)(RAW_PS2_OFFSET + Memory::BasePS2MemorySpace) + Memory::BasePS2MemorySpace; }
-
-    ///---------------------------------------------------------------------------------------------------
-    //	[MEMORY]
     // Resolves Pointer Chain from input Shorthand RAW PS2 Format Address
     // <returns></returns>
-    uintptr_t Memory::ResolvePtrChain(unsigned int RAW_PS2_OFFSET, std::vector<unsigned int> offsets)
+    __int64 Memory::ResolvePtrChain(__int64 addr, std::vector<unsigned int> offsets)
     {
         //  --
-        uintptr_t addr = (*(int32_t*)GetPS2Address(RAW_PS2_OFFSET)) + BasePS2MemorySpace;
-        if (offsets.empty())
-            return addr;
-
-        // --- untested (possibly not needed anyways, should work)
-        // GetClassPtr and relevent functions within each class will make this useless
-        for (int i = 0; i < offsets.size(); i++)
-        {
-            addr = *(int32_t*)addr;
-            addr += (offsets[i] + BasePS2MemorySpace);
-        }
-        return addr;
+        //  uintptr_t addr = (*(int32_t*)GetPS2Addr(RAW_PS2_OFFSET)) + Memory::BasePS2MemorySpace;
+        //  if (offsets.empty())
+        //      return addr;
+        //  
+        //  // --- untested (possibly not needed anyways, should work)
+        //  // GetClassPtr and relevent functions within each class will make this useless
+        //  for (int i = 0; i < offsets.size(); i++)
+        //  {
+        //      addr = *(int32_t*)addr;
+        //      addr += (offsets[i] + Memory::BasePS2MemorySpace);
+        //  }
+        //  return addr;
+        return 0;
     }
 
     ///---------------------------------------------------------------------------------------------------
@@ -254,7 +339,7 @@ namespace PlayStation2
     // Write Assembly patches to desired location
     // <returns>TRUE if operation is a success, otherwise result is FALSE</returns>
     // Note: resolve any offsets prior to running this function.
-    bool Memory::BytePatch(uintptr_t Address, BYTE* bytes, unsigned int size)
+    bool Memory::BytePatch(__int64 Address, BYTE* bytes, unsigned int size)
     {
         DWORD oldprotect;
         auto status = VirtualProtect(reinterpret_cast<void*>(Address), size, PAGE_EXECUTE_READWRITE, &oldprotect);
@@ -270,7 +355,7 @@ namespace PlayStation2
     //	[MEMORY]
     // Write NOP opcodes for desired size at the set destination
     // <returns>TRUE if operation is a success, otherwise result is FALSE</returns>
-    bool Memory::NopBytes(uintptr_t Address, unsigned int size)
+    bool Memory::NopBytes(__int64 Address, unsigned int size)
     {
         DWORD oldprotect;
         auto status = VirtualProtect(reinterpret_cast<void*>(Address), size, PAGE_EXECUTE_READWRITE, &oldprotect);
@@ -282,16 +367,106 @@ namespace PlayStation2
         return TRUE;
     }
 
+#pragma endregion
+
+    //----------------------------------------------------------------------------------------------------
+    //									    PS2Memory
+    //-----------------------------------------------------------------------------------
+
+#pragma region  //  PS2Memory
+
+    ///---------------------------------------------------------------------------------------------------
+    __int64 PS2Memory::GetModuleBase() { return Memory::BasePS2MemorySpace; }
+
+    ///---------------------------------------------------------------------------------------------------
+    //	[MEMORY]
+    // Converts shortened RAW PS2 format address to x64 address
+    // EXAMPLE:
+    // - Original RAW  : 20123456  
+    // - Shortened RAW : 0x123456
+    // - Base Memory   : 7FF660000000
+    // - Result        : 7FF660000000 + 0x123456 = 7FF660123456
+    __int64 PS2Memory::GetAddr(__int32 offset) { return Memory::BasePS2MemorySpace + offset; }
+
+    ///---------------------------------------------------------------------------------------------------
+    //	[MEMORY]
+    // Resolves Pointer Chain from input Shorthand RAW PS2 Format Address
+    // <returns></returns>
+    __int64 PS2Memory::ResolvePtrChain(__int32 RAW_PS2_OFFSET, std::vector<__int32> offsets)
+    {
+        //  --
+        uintptr_t addr = (*(int32_t*)GetAddr(RAW_PS2_OFFSET)) + Memory::BasePS2MemorySpace;
+        if (offsets.empty())
+            return addr;
+
+        // --- untested (possibly not needed anyways, should work)
+        // GetClassPtr and relevent functions within each class will make this useless
+        for (int i = 0; i < offsets.size(); i++)
+        {
+            addr = *(int32_t*)addr;
+            addr += (offsets[i] + Memory::BasePS2MemorySpace);
+        }
+        return addr;
+    }
+
+#pragma endregion
 
     //----------------------------------------------------------------------------------------------------
 	//										TOOLS
 	//-----------------------------------------------------------------------------------
 
+#pragma region  //  TOOLS
+
+
+#pragma endregion
+
+    //----------------------------------------------------------------------------------------------------
+    //									TOOLS::CPUTimer
+    //-----------------------------------------------------------------------------------
+
+#pragma region  //  TOOLS::CPUTimer
+
+    Tools::CPUTimer::CPUTimer() { Start(); }
+
+    void Tools::CPUTimer::Start() { m_start = clock(); }
+
+    void Tools::CPUTimer::Stop() { m_end = clock(); }
+
+    void Tools::CPUTimer::Reset() { Start(); }
+
+    double Tools::CPUTimer::GetElapsedTime(clock_t time, ETimings t = ETimings::ETiming_MS) const
+    {
+        double res = static_cast<double>(time - m_start) / CLOCKS_PER_SEC;
+        switch (t)
+        {
+            case ETimings::ETiming_MS: return res * 1000;
+            case ETimings::ETiming_S: return res;
+            case ETimings::ETiming_M: return res / 60;
+            case ETimings::ETiming_HR: return res / 3600;
+            default: return res;
+        }
+    }
+
+    double Tools::CPUTimer::Stop(ETimings t)
+    {
+        m_end = clock();
+        return GetElapsedTime(m_end, t);
+    }
+
+#pragma endregion
+
+
+    //----------------------------------------------------------------------------------------------------
+    //									TOOLS::Math3D
+    //-----------------------------------------------------------------------------------
+
+#pragma region  //  TOOLS::Math3D
+
     ///---------------------------------------------------------------------------------------------------
     //	[TOOL]
     //	Gets distance from Position A to Position B
     // <returns>Vector3</returns>
-    float Tools::GetDistanceTo3DObject(Vector3 POS, Vector3 POS2)
+    float Tools::Math3D::GetDistanceTo3DObject(Vector3 POS, Vector3 POS2)
     {
         float x = (POS2.x - POS.x);
         float y = (POS2.y - POS.y);
@@ -299,5 +474,7 @@ namespace PlayStation2
         float distance = std::sqrt(x * x + y * y + z * z);
         return (distance);
     }
+
+#pragma endregion
+
 }
-#pragma pack(pop)
