@@ -14,39 +14,70 @@ namespace PlayStation2
     //-----------------------------------------------------------------------------------
 
     ///---------------------------------------------------------------------------------------------------
-    bool InitSDK(const std::string& moduleName, unsigned int gDevice)
+    bool InitCDK(const std::string& moduleName)
     {
         bool result{ false };
+
+        Tools::CPUTimer t;
 
         HANDLE pHand = GetModuleHandleA(moduleName.c_str());
         if (!pHand)
             return result;
 
-        CGlobals::g_gs_device = reinterpret_cast<GSDevice*>(*(__int64*)(Memory::GetAddr(gDevice)));
-        if (!CGlobals::g_gs_device)
-            return false;
-
         CGlobals::g_console = Console::GetDefaultInstance();
+        
         CGlobals::g_engine = Engine::GetDefaultInstance();
+
         CGlobals::g_memory = Memory::GetDefaultInstance();
 
-        Console::LogMsg("[+] PCSX2 Framework Client Initialized!\nmodBase:\t0x%llX\nPS2ModBase:\t0x%llX\ng_gs_device:\t0x%llX\nRenderAPI:\t%d\n", 
+        Console::LogMsg("[+][%.3f] PCSX2 Cheat Device Initialized!\n- PCSX2:\t0x%llX\n- PS2:\t\t0x%llX\n\n",
+            t.Stop(Tools::CPUTimer::ETimings::ETiming_MS),
             (__int64)pHand,
-            PS2Memory::GetModuleBase(), 
-            CGlobals::g_gs_device, 
-            GSDevice::GetRenderAPI()
+            PS2Memory::GetModuleBase()
         );
+
         return true;
     }
 
     ///---------------------------------------------------------------------------------------------------
-    // Template Initialization function
-    //  NOTE: offsets will not always be correct
-    //  NOTE2: PCSX2 v1.7.5617
-    bool InitSDK() { return InitSDK("pcsx2-qt.exe", PCSX2::o_gs_device); }
+    //  Custom method for automatically initializing GSDevice
+    bool InitCDK(const std::string& moduleName, unsigned int gDevice)
+    {
+        bool result{ false };
+
+        Tools::CPUTimer t;
+
+        HANDLE pHand = GetModuleHandleA(moduleName.c_str());
+        if (!pHand)
+            return result;
+
+        PCSX2::g_gs_device = reinterpret_cast<GSDevice*>(*(__int64*)(Memory::GetAddr(gDevice)));
+        if (!PCSX2::g_gs_device)
+            return false;
+
+        CGlobals::g_console = Console::GetDefaultInstance();
+        
+        CGlobals::g_engine = Engine::GetDefaultInstance();
+
+        CGlobals::g_memory = Memory::GetDefaultInstance();
+
+        Console::LogMsg("[+][%.3f] PCSX2 Cheat Device Initialized!\n- PCSX2:\t0x%llX\n- PS2:\t\t0x%llX\n- GSDevice:\t0x%llX\n- RenderAPI:\t%d\n\n",
+            t.Stop(Tools::CPUTimer::ETimings::ETiming_MS),
+            (__int64)pHand,
+            PS2Memory::GetModuleBase(), 
+            PCSX2::g_gs_device,
+            GSDevice::GetRenderAPI()    //  @TODO: get string , its a virtual method . . .
+        );
+
+        return true;
+    }
 
     ///---------------------------------------------------------------------------------------------------
-    void ShutdownSDK() { }
+    // Template Initialization function compatible with Nightly Builds
+    bool InitCDK() { return InitCDK("pcsx2-qt.exe"); }
+
+    ///---------------------------------------------------------------------------------------------------
+    void ShutdownCDK() { Console::DestroyConsole(); }
 
     //----------------------------------------------------------------------------------------------------
     //										CGLOBALS
@@ -56,9 +87,6 @@ namespace PlayStation2
 
     //----------------------------------------------------------------------------------------------------
     //  STATICS
-    GSRenderer*             CGlobals::g_gs_renderer;
-    GSDevice*               CGlobals::g_gs_device;
-    EmuThread*              CGlobals::g_emu_thread;
     Console*                CGlobals::g_console;
     Engine*                 CGlobals::g_engine;
     Memory*                 CGlobals::g_memory;
@@ -116,9 +144,6 @@ namespace PlayStation2
         SetConsoleTitleA(title);                                            //  Set console window title
         m_isConsoleAllocated = true;
     }
-
-    ///---------------------------------------------------------------------------------------------------
-    Console::~Console() { DestroyConsole(); }
 
     ///---------------------------------------------------------------------------------------------------
     Console* Console::GetDefaultInstance() { return m_instance; }
@@ -183,40 +208,6 @@ namespace PlayStation2
 #pragma region  //  ENGINE
 
     Engine* Engine::m_instance = new Engine();
-
-    ///---------------------------------------------------------------------------------------------------
-    //  D3D Template Hook
-    bool Engine::D3D11HookPresent(IDXGISwapChain* p, void* ofnc, void* nFnc)
-    {
-        if (GSDevice::GetRenderAPI() != RenderAPI::D3D11)
-            return false;
-
-        // Get GS Device
-        auto d3d11 = static_cast<GSDevice11*>(CGlobals::g_gs_device);
-        if (!d3d11)
-            return false;
-
-        //  Get SwapChain
-        p = d3d11->GetSwapChain();
-        if (!p)
-            return false;
-
-        // Hook
-        hkVFunction(p, 8, ofnc, nFnc);
-
-        return true;
-    }
-
-    ///---------------------------------------------------------------------------------------------------
-    void Engine::D3D11UnHookPresent(IDXGISwapChain* p, void* ofnc)
-    {
-        if (!p)
-            return;
-
-        hkRestoreVFunction(p, 8, ofnc);
-        p = nullptr;
-        ofnc = 0;
-    }
 
     ///---------------------------------------------------------------------------------------------------
     Engine* Engine::GetDefaultInstance() { return m_instance; }
@@ -303,9 +294,9 @@ namespace PlayStation2
 
         // Set the fields of the ProcessInfo struct
         pInfo.m_GameWindow      = hWnd;
-        pInfo.m_WindowTitle     = szWindowTitle;
-        pInfo.m_ClassName       = szClassName;
-        pInfo.m_ModulePath      = szModulePath;
+        pInfo.m_WindowTitle     = std::string(szWindowTitle, lstrlenA(szWindowTitle));
+        pInfo.m_ClassName       = std::string(szClassName, lstrlenA(szClassName));
+        pInfo.m_ModulePath      = std::string(szModulePath, lstrlenA(szModulePath));
         pInfo.m_WindowWidth     = nWidth;
         pInfo.m_WindowHeight    = nHeight;
         pInfo.m_WindowSize      = Vector2((float)nWidth, (float)nHeight);
@@ -417,6 +408,30 @@ namespace PlayStation2
 
 #pragma region  //  TOOLS
 
+    bool Tools::GetKeyState(WORD v, SHORT delta)
+    {
+        static int lastTick = 0;
+        
+        bool result = ((GetAsyncKeyState(v) & 0x8000) && (GetTickCount64() - lastTick) > delta);
+        
+        if (result)
+            lastTick = GetTickCount64();
+        
+        return result;
+    }
+
+    bool Tools::GamepadGetButtonState(WORD v)
+    {
+        XINPUT_STATE state;
+        ZeroMemory(&state, sizeof(XINPUT_STATE));
+        DWORD result = XInputGetState(0, &state);
+        if (result == ERROR_SUCCESS)
+        {
+            if ((state.Gamepad.wButtons & v) == v)
+                return true;
+        }
+        return false;
+    }
 
 #pragma endregion
 
@@ -434,7 +449,7 @@ namespace PlayStation2
 
     void Tools::CPUTimer::Reset() { Start(); }
 
-    double Tools::CPUTimer::GetElapsedTime(clock_t time, ETimings t = ETimings::ETiming_MS) const
+    double Tools::CPUTimer::GetElapsedTime(clock_t time, ETimings t) const
     {
         double res = static_cast<double>(time - m_start) / CLOCKS_PER_SEC;
         switch (t)
@@ -443,7 +458,6 @@ namespace PlayStation2
             case ETimings::ETiming_S: return res;
             case ETimings::ETiming_M: return res / 60;
             case ETimings::ETiming_HR: return res / 3600;
-            default: return res;
         }
     }
 

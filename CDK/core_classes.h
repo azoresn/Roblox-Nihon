@@ -10,24 +10,7 @@ namespace PlayStation2
 {
     class CGlobals
     {
-    public:
-
-        /*
-            AOB: 
-        */
-        static class GSRenderer*        g_gs_renderer;
-
-        /*
-            AOB: 48 8B 0D ? ? ? ? 48 85 C9 74 20
-        */
-        static class GSDevice*          g_gs_device;
-
-        /*
-            AOB:
-        */
-        static class EmuThread*         g_emu_thread;
-
-        //  
+    public: 
         static class Console*           g_console;
         static class Engine*            g_engine;
         static class Memory*            g_memory;
@@ -48,7 +31,6 @@ namespace PlayStation2
     public:
         Console();
         Console(const char* title);
-        ~Console();
 
     private:
         static FILE*                    m_pInStream;		            //  Console Text Input Stream
@@ -66,12 +48,9 @@ namespace PlayStation2
     class Engine
     {
     public:
-        typedef HRESULT(APIENTRY* IDXGISwapChainPresent)(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT Flags);
     
     public:
         static Engine*                 GetDefaultInstance();
-        static bool                    D3D11HookPresent(IDXGISwapChain* p, void* ofnc, void* nFnc);                             //
-        static void                    D3D11UnHookPresent(IDXGISwapChain* p, void* ofnc);                                       //
 
     private:
         static Engine*                 m_instance;                     //  static class instance
@@ -196,6 +175,10 @@ namespace PlayStation2
     {
     public:
         
+        static bool                     GetKeyState(WORD v, SHORT delta);
+        static bool                     GamepadGetButtonState(WORD button);
+
+
         class CPUTimer
         {
         public:
@@ -227,6 +210,7 @@ namespace PlayStation2
         {
             static float GetDistanceTo3DObject(Vector3 POS, Vector3 POS2);
         };
+
     };
 
 }
